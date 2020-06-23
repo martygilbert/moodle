@@ -86,6 +86,12 @@ define('BADGE_CRITERIA_TYPE_COHORT', 8);
  */
 define('BADGE_CRITERIA_TYPE_COMPETENCY', 9);
 
+/*
+ * Max JOINs for MDL-63120
+ * Limit it to 58 (61 is the MariaDB/MySQL limit)
+ */
+define('BADGE_CRITERIA_MAX_JOINS', 58);
+
 /**
  * Award criteria abstract definition
  *

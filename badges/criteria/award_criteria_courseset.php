@@ -198,7 +198,7 @@ class award_criteria_courseset extends award_criteria {
      */
     public function review($userid, $filtered = false) {
         foreach ($this->params as $param) {
-            $course =  new stdClass();
+            $course = new stdClass();
             $course->id = $param['course'];
 
             $info = new completion_info($course);
@@ -248,29 +248,42 @@ class award_criteria_courseset extends award_criteria {
      * @return array list($join, $where, $params)
      */
     public function get_completed_criteria_sql() {
-        $join = '';
-        $where = '';
+        $join = array();
+        $where = array();
         $params = array();
 
         if ($this->method == BADGE_CRITERIA_AGGREGATION_ANY) {
+            $params[0]  = array();
+            $join[0]    = '';
+            $where[0]   = '';
+
             foreach ($this->params as $param) {
                 $coursedata[] = " cc.course = :completedcourse{$param['course']} ";
-                $params["completedcourse{$param['course']}"] = $param['course'];
+                $params[0]["completedcourse{$param['course']}"] = $param['course'];
             }
             if (!empty($coursedata)) {
                 $extraon = implode(' OR ', $coursedata);
-                $join = " JOIN {course_completions} cc ON cc.userid = u.id AND
+                $join[0] = " JOIN {course_completions} cc ON cc.userid = u.id AND
                           cc.timecompleted > 0 AND ({$extraon})";
             }
             return array($join, $where, $params);
         } else {
+            $joincount = 0;
             foreach ($this->params as $param) {
-                $join .= " LEFT JOIN {course_completions} cc{$param['course']} ON
+                $idx = floor($joincount++ / BADGE_CRITERIA_MAX_JOINS);
+
+                if (!isset($params[$idx])) {
+                    $params[$idx]   = array();
+                    $join[$idx]     = '';
+                    $where[$idx]    = '';
+                }
+
+                $join[$idx] .= " LEFT JOIN {course_completions} cc{$param['course']} ON
                           cc{$param['course']}.userid = u.id AND
                           cc{$param['course']}.course = :completedcourse{$param['course']} AND
                           cc{$param['course']}.timecompleted > 0 ";
-                $where .= " AND cc{$param['course']}.course IS NOT NULL ";
-                $params["completedcourse{$param['course']}"] = $param['course'];
+                $where[$idx] .= " AND cc{$param['course']}.course IS NOT NULL ";
+                $paramsp[$idx]["completedcourse{$param['course']}"] = $param['course'];
             }
             return array($join, $where, $params);
         }

@@ -218,20 +218,22 @@ class award_criteria_cohort extends award_criteria {
      * @return array list($join, $where, $params)
      */
     public function get_completed_criteria_sql() {
-        $join = '';
-        $where = '';
+        $join   = array();
+        $where  = array();
         $params = array();
 
         if ($this->method == BADGE_CRITERIA_AGGREGATION_ANY) {
+            $params[0]  = array();
+
             // User is a member of ANY of the specified cohorts.
-            $join = " LEFT JOIN {cohort_members} cm ON cm.userid = u.id";
-            $where = "AND (";
+            $join[0] = " LEFT JOIN {cohort_members} cm ON cm.userid = u.id";
+            $where[0] = "AND (";
             $i = 0;
             foreach ($this->params as $param) {
                 if ($i == 0) {
-                    $where .= ' cm.cohortid = :cohortid'.$i;
+                    $where[0] .= ' cm.cohortid = :cohortid'.$i;
                 } else {
-                    $where .= ' OR cm.cohortid = :cohortid'.$i;
+                    $where[0] .= ' OR cm.cohortid = :cohortid'.$i;
                 }
                 $params['cohortid'.$i] = $param['cohort'];
                 $i++;
@@ -244,7 +246,7 @@ class award_criteria_cohort extends award_criteria {
             $i = 0;
             foreach ($this->params as $param) {
                 $i++;
-                $where = ' AND cm.cohortid = :cohortid'.$i;
+                $where .= ' AND cm.cohortid = :cohortid'.$i;
                 $params['cohortid'.$i] = $param['cohort'];
             }
             return array($join, $where, $params);

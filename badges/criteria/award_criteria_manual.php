@@ -195,32 +195,37 @@ class award_criteria_manual extends award_criteria {
      * @return array list($join, $where, $params)
      */
     public function get_completed_criteria_sql() {
-        $join = '';
-        $where = '';
+        $join   = array();
+        $where  = array();
         $params = array();
 
+        $params[0]  = array();
+        $join[0]    = '';
+        $where[0]   = '';
+
         if ($this->method == BADGE_CRITERIA_AGGREGATION_ANY) {
+
             foreach ($this->params as $param) {
                 $roledata[] = " bma.issuerrole = :issuerrole{$param['role']} ";
-                $params["issuerrole{$param['role']}"] = $param['role'];
+                $params[0]["issuerrole{$param['role']}"] = $param['role'];
             }
             if (!empty($roledata)) {
                 $extraon = implode(' OR ', $roledata);
-                $join = " JOIN {badge_manual_award} bma ON bma.recipientid = u.id
+                $join[0] = " JOIN {badge_manual_award} bma ON bma.recipientid = u.id
                           AND bma.badgeid = :badgeid{$this->badgeid} AND ({$extraon})";
-                $params["badgeid{$this->badgeid}"] = $this->badgeid;
+                $params[0]["badgeid{$this->badgeid}"] = $this->badgeid;
             }
             return array($join, $where, $params);
         } else {
             foreach ($this->params as $param) {
                 $roledata[] = " bma.issuerrole = :issuerrole{$param['role']} ";
-                $params["issuerrole{$param['role']}"] = $param['role'];
+                $params[0]["issuerrole{$param['role']}"] = $param['role'];
             }
             if (!empty($roledata)) {
                 $extraon = implode(' AND ', $roledata);
-                $join = " JOIN {badge_manual_award} bma ON bma.recipientid = u.id
+                $join[0] = " JOIN {badge_manual_award} bma ON bma.recipientid = u.id
                           AND bma.badgeid = :badgeid{$this->badgeid} AND ({$extraon})";
-                $params["badgeid{$this->badgeid}"] = $this->badgeid;
+                $params[0]["badgeid{$this->badgeid}"] = $this->badgeid;
             }
             return array($join, $where, $params);
         }

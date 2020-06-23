@@ -233,37 +233,55 @@ class award_criteria_activity extends award_criteria {
      * Returns array with sql code and parameters returning all ids
      * of users who meet this particular criterion.
      *
+     * $join, $where, and $params are arrays, due to the fact
+     * that large lists of criteria exceed the 61 JOIN limit
+     * of MySQL/MariaDB MDL-63120
+     *
      * @return array list($join, $where, $params)
      */
     public function get_completed_criteria_sql() {
-        $join = '';
-        $where = '';
+        $join = array();
+        $where = array();
         $params = array();
 
         if ($this->method == BADGE_CRITERIA_AGGREGATION_ANY) {
+            $params[0]  = array();
+            $where[0]   = '';
+            $join[0]    = '';
+
             foreach ($this->params as $param) {
                 $moduledata[] = " cmc.coursemoduleid = :completedmodule{$param['module']} ";
-                $params["completedmodule{$param['module']}"] = $param['module'];
+                $params[0]["completedmodule{$param['module']}"] = $param['module'];
             }
             if (!empty($moduledata)) {
                 $extraon = implode(' OR ', $moduledata);
-                $join = " JOIN {course_modules_completion} cmc ON cmc.userid = u.id AND
+                $join[0] = " JOIN {course_modules_completion} cmc ON cmc.userid = u.id AND
                           ( cmc.completionstate = :completionpass OR cmc.completionstate = :completioncomplete ) AND ({$extraon})";
-                $params["completionpass"] = COMPLETION_COMPLETE_PASS;
-                $params["completioncomplete"] = COMPLETION_COMPLETE;
+                $params[0]["completionpass"] = COMPLETION_COMPLETE_PASS;
+                $params[0]["completioncomplete"] = COMPLETION_COMPLETE;
             }
             return array($join, $where, $params);
         } else {
+            // Group them in groups of BADGE_CRITERIA_MAX_JOINS.
+            $i = 0;
             foreach ($this->params as $param) {
-                $join .= " LEFT JOIN {course_modules_completion} cmc{$param['module']} ON
+                $idx = floor($i++ / BADGE_CRITERIA_MAX_JOINS);
+
+                if (!isset($params[$idx])) {
+                    $params[$idx]   = array();
+                    $join[$idx]     = '';
+                    $where[$idx]    = '';
+                }
+
+                $join[$idx] .= " LEFT JOIN {course_modules_completion} cmc{$param['module']} ON
                           cmc{$param['module']}.userid = u.id AND
                           cmc{$param['module']}.coursemoduleid = :completedmodule{$param['module']} AND
                           ( cmc{$param['module']}.completionstate = :completionpass{$param['module']} OR
                             cmc{$param['module']}.completionstate = :completioncomplete{$param['module']} )";
-                $where .= " AND cmc{$param['module']}.coursemoduleid IS NOT NULL ";
-                $params["completedmodule{$param['module']}"] = $param['module'];
-                $params["completionpass{$param['module']}"] = COMPLETION_COMPLETE_PASS;
-                $params["completioncomplete{$param['module']}"] = COMPLETION_COMPLETE;
+                $where[$idx] .= " AND cmc{$param['module']}.coursemoduleid IS NOT NULL ";
+                $params[$idx]["completedmodule{$param['module']}"] = $param['module'];
+                $params[$idx]["completionpass{$param['module']}"] = COMPLETION_COMPLETE_PASS;
+                $params[$idx]["completioncomplete{$param['module']}"] = COMPLETION_COMPLETE;
             }
             return array($join, $where, $params);
         }

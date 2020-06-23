@@ -216,17 +216,25 @@ class award_criteria_profile extends award_criteria {
     public function get_completed_criteria_sql() {
         global $DB;
 
-        $join = '';
+        $join = array();
         $whereparts = array();
         $params = array();
         $rule = ($this->method == BADGE_CRITERIA_AGGREGATION_ANY) ? ' OR ' : ' AND ';
+
+        /*
+            This is an ugly hack, right? But is there any situation in which
+            there would be more than 58 profile criteria?
+        */
+        $params[0] = array();
+        $join[0] = '';
+        $where[0] = '';
 
         foreach ($this->params as $param) {
             if (is_numeric($param['field'])) {
                 // This is a custom field.
                 $idx = count($whereparts);
-                $join .= " LEFT JOIN {user_info_data} uid{$idx} ON uid{$idx}.userid = u.id AND uid{$idx}.fieldid = :fieldid{$idx} ";
-                $params["fieldid{$idx}"] = $param['field'];
+                $join[0] .= " LEFT JOIN {user_info_data} uid{$idx} ON uid{$idx}.userid = u.id AND uid{$idx}.fieldid = :fieldid{$idx} ";
+                $params[0]["fieldid{$idx}"] = $param['field'];
                 $whereparts[] = "uid{$idx}.id IS NOT NULL";
             } else {
                 // This is a field from {user} table.
@@ -240,9 +248,9 @@ class award_criteria_profile extends award_criteria {
         }
 
         if ($whereparts) {
-            $where = " AND (" . implode($rule, $whereparts) . ")";
+            $where[0] = " AND (" . implode($rule, $whereparts) . ")";
         } else {
-            $where = '';
+            $where[0] = '';
         }
         return array($join, $where, $params);
     }

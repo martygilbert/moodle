@@ -229,14 +229,19 @@ class award_criteria_course extends award_criteria {
         // We have only one criterion here, so taking the first one.
         $coursecriteria = reset($this->params);
 
-        $join = " LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.timecompleted > 0";
-        $where = ' AND cc.course = :courseid ';
-        $params['courseid'] = $this->courseid;
+        $join   = array();
+        $where  = array();
+        $params = array();
+        $params[0] = array();
+
+        $join[0] = " LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.timecompleted > 0";
+        $where[0] = ' AND cc.course = :courseid ';
+        $params[0]['courseid'] = $this->courseid;
 
         // Add by date parameter.
         if (isset($param['bydate'])) {
-            $where .= ' AND cc.timecompleted <= :completebydate';
-            $params['completebydate'] = $coursecriteria['bydate'];
+            $where[0] .= ' AND cc.timecompleted <= :completebydate';
+            $params[0]['completebydate'] = $coursecriteria['bydate'];
         }
 
         return array($join, $where, $params);

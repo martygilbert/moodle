@@ -236,36 +236,42 @@ class award_criteria_badge extends award_criteria {
      * @return array list($join, $where, $params)
      */
     public function get_completed_criteria_sql() {
-        $join = '';
-        $where = '';
+        $join   = array();
+        $where  = array();
         $params = array();
 
         if ($this->method == BADGE_CRITERIA_AGGREGATION_ANY) {
+            $params[0]  = array();
+            $where[0]   = '';
+
             // User has received ANY of the required badges.
-            $join = " LEFT JOIN {badge_issued} bi2 ON bi2.userid = u.id";
+            $join[0] = " LEFT JOIN {badge_issued} bi2 ON bi2.userid = u.id";
             $i = 0;
             foreach ($this->params as $param) {
                 if ($i == 0) {
-                    $where .= ' bi2.badgeid = :badgeid'.$i;
+                    $where[0] .= ' bi2.badgeid = :badgeid'.$i;
                 } else {
-                    $where .= ' OR bi2.badgeid = :badgeid'.$i;
+                    $where[0] .= ' OR bi2.badgeid = :badgeid'.$i;
                 }
-                $params['badgeid'.$i] = $param['badge'];
+                $params[0]['badgeid'.$i] = $param['badge'];
                 $i++;
             }
             // MDL-66032 Do not create expression if there are no badges in criteria.
-            if (!empty($where)) {
-                $where = ' AND (' . $where . ') ';
+            if (!empty($where[0])) {
+                $where[0] = ' AND (' . $where[0] . ') ';
             }
             return array($join, $where, $params);
         } else {
             // User has received ALL of the required badges.
-            $join = " LEFT JOIN {badge_issued} bi2 ON bi2.userid = u.id";
+            $params[0]  = array();
+            $where[0] = '';
+            $join[0] = " LEFT JOIN {badge_issued} bi2 ON bi2.userid = u.id";
+
             $i = 0;
             foreach ($this->params as $param) {
                 $i++;
-                $where = ' AND bi2.badgeid = :badgeid'.$i;
-                $params['badgeid'.$i] = $param['badge'];
+                $where[0] = ' AND bi2.badgeid = :badgeid'.$i;
+                $params[0]['badgeid'.$i] = $param['badge'];
             }
             return array($join, $where, $params);
         }

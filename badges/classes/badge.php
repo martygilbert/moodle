@@ -496,16 +496,21 @@ class badge {
             }
 
             list($extrajoin, $extrawhere, $extraparams) = $crit->get_completed_criteria_sql();
+
+            $earncol = array();
             // For site level badges, get all active site users who can earn this badge and haven't got it yet.
             if ($this->type == BADGE_TYPE_SITE) {
-                $sql = "SELECT DISTINCT u.id, bi.badgeid
-                        FROM {user} u
-                        {$extrajoin}
-                        LEFT JOIN {badge_issued} bi
-                            ON u.id = bi.userid AND bi.badgeid = :badgeid
-                        WHERE bi.badgeid IS NULL AND u.id != :guestid AND u.deleted = 0 " . $extrawhere;
-                $params = array_merge(array('badgeid' => $this->id, 'guestid' => $CFG->siteguest), $extraparams);
-                $toearn = $DB->get_fieldset_sql($sql, $params);
+                foreach ($extrajoin as $idx => $xjoin) {
+                    $sql = "SELECT DISTINCT u.id, bi.badgeid
+                            FROM {user} u
+                            {$xjoin}
+                            LEFT JOIN {badge_issued} bi
+                                ON u.id = bi.userid AND bi.badgeid = :badgeid
+                            WHERE bi.badgeid IS NULL AND u.id != :guestid AND u.deleted = 0 " . $extrawhere[$idx];
+                    $params = array_merge(array('badgeid' => $this->id, 'guestid' => $CFG->siteguest), $extraparams[$idx]);
+                    $earncol[] = $DB->get_fieldset_sql($sql, $params);
+                }
+
             } else {
                 // For course level badges, get all users who already earned the badge in this course.
                 // Then find the ones who are enrolled in the course and don't have a badge yet.
@@ -523,12 +528,23 @@ class badge {
                     $wheresql = ' WHERE u.id ' . $earnedsql;
                 }
                 list($enrolledsql, $enrolledparams) = get_enrolled_sql($this->get_context(), 'moodle/badges:earnbadge', 0, true);
-                $sql = "SELECT DISTINCT u.id
-                        FROM {user} u
-                        {$extrajoin}
-                        JOIN ({$enrolledsql}) je ON je.id = u.id " . $wheresql . $extrawhere;
-                $params = array_merge($enrolledparams, $earnedparams, $extraparams);
-                $toearn = $DB->get_fieldset_sql($sql, $params);
+
+                foreach ($extrajoin as $idx => $xjoin) {
+                    $sql = "SELECT DISTINCT u.id
+                            FROM {user} u
+                            {$xjoin}
+                            JOIN ({$enrolledsql}) je ON je.id = u.id " . $wheresql . $extrawhere[$idx];
+
+                    $params = array_merge($enrolledparams, $earnedparams, $extraparams[$idx]);
+
+                    $earncol[] = $DB->get_fieldset_sql($sql, $params);
+                }
+            }
+
+            if (count($earncol) > 1) {
+                $toearn = call_user_func_array('array_intersect', $earncol);
+            } else {
+                $toearn = $earncol[0];
             }
 
             foreach ($toearn as $uid) {

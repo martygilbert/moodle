@@ -212,10 +212,10 @@ class award_criteria_competency extends award_criteria {
     public function get_completed_criteria_sql() {
         global $DB;
 
-        $join = '';
-        $where = '';
-        $params = [];
-        $competencyids = [];
+        $join = array();
+        $where = array();
+        $params = array();
+        $competencyids = array();
 
         $badge = $DB->get_record('badge', array('id' => $this->badgeid));
 
@@ -229,30 +229,32 @@ class award_criteria_competency extends award_criteria {
                 $competencyids[] = $param['competency'];
             }
 
-            $where = ' AND uc2.competencyid ';
+            $where[0] = ' AND uc2.competencyid ';
             list($sql, $params) = $DB->get_in_or_equal($competencyids, SQL_PARAMS_NAMED, 'usercomp');
-            $where .= $sql;
+            $where[0] .= $sql;
             if ($badge->type == BADGE_TYPE_SITE) {
-                $join = ' JOIN {competency_usercomp} uc2 ON uc2.userid = u.id';
+                $join[0] = ' JOIN {competency_usercomp} uc2 ON uc2.userid = u.id';
             } else if ($badge->type == BADGE_TYPE_COURSE) {
-                $join = ' JOIN {competency_usercompcourse} uc2 ON uc2.userid = u.id AND uc2.courseid = :competencycourseid ';
-                $params['competencycourseid'] = $badge->courseid;
+                $join[0] = ' JOIN {competency_usercompcourse} uc2 ON uc2.userid = u.id AND uc2.courseid = :competencycourseid ';
+                $params[0]['competencycourseid'] = $badge->courseid;
             }
-            $where .= ' AND uc2.proficiency = :isproficient ';
-            $params['isproficient'] = true;
+            $where[0] .= ' AND uc2.proficiency = :isproficient ';
+            $params[0]['isproficient'] = true;
         } else {
 
             // User has received ALL of the required competencies (we have to join on each one).
             $joincount = 0;
             foreach ($this->params as $param) {
+                $idx = floor($joincount / BADGE_CRITERIA_MAX_JOINS);
                 $joincount++;
-                $join .= ' JOIN {competency_usercomp} uc' . $joincount . ' ON uc' . $joincount . '.userid = u.id';
-                $where .= ' AND uc' . $joincount . '.competencyid = :competencyindex' . $joincount;
-                $params['competencyindex' . $joincount] = $param['competency'];
 
-                $where .= ' AND uc' . $joincount . '.userid = u.id';
-                $where .= ' AND uc' . $joincount . '.proficiency = :isproficient' . $joincount;
-                $params['isproficient' . $joincount] = true;
+                $join[$idx] .= ' JOIN {competency_usercomp} uc' . $joincount . ' ON uc' . $joincount . '.userid = u.id';
+                $where[$idx] .= ' AND uc' . $joincount . '.competencyid = :competencyindex' . $joincount;
+                $params[$idx]['competencyindex' . $joincount] = $param['competency'];
+
+                $where[$idx] .= ' AND uc' . $joincount . '.userid = u.id';
+                $where[$idx] .= ' AND uc' . $joincount . '.proficiency = :isproficient' . $joincount;
+                $params[$idx]['isproficient' . $joincount] = true;
             }
 
         }

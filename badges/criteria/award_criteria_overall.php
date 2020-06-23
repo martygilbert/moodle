@@ -149,7 +149,7 @@ class award_criteria_overall extends award_criteria {
      * @return array list($join, $where, $params)
      */
     public function get_completed_criteria_sql() {
-        return array('', '', array());
+        return array(array(''), array(''), array(array()));
     }
 
     /**
