@@ -244,7 +244,7 @@ class award_criteria_cohort extends award_criteria {
             $i = 0;
             foreach ($this->params as $param) {
                 $i++;
-                $where = ' AND cm.cohortid = :cohortid'.$i;
+                $where .= ' AND cm.cohortid = :cohortid'.$i;
                 $params['cohortid'.$i] = $param['cohort'];
             }
             return array($join, $where, $params);
