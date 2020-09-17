@@ -829,6 +829,8 @@ class assign_course_index_summary implements renderable {
     public $usesections = false;
     /** @var string courseformat - The current course format name */
     public $courseformatname = '';
+    /** @var boolean cangrade - Does this user have the capability to grade this assignment? **/
+    public $cangrade = false;
 
     /**
      * constructor
