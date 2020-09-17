@@ -4367,4 +4367,77 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
         $this->assertNotEmpty($event2);
         $this->assertSame('This one should be re-created', $event2->description);
     }
+
+    /**
+     * Test submissions that need grading output after one ungraded submission
+     */
+    public function test_submissions_need_grading() {
+        global $PAGE;
+
+        $this->resetAfterTest();
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'teacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+
+        // Setup the assignment.
+        $this->setUser($teacher);
+        $time = time();
+        $assign = $this->create_instance($course, [
+                'assignsubmission_onlinetext_enabled' => 1,
+            ]);
+        $PAGE->set_url(new moodle_url('/mod/assign/view.php', array(
+            'id' => $assign->get_course_module()->id,
+            'action' => 'grading',
+        )));
+
+        // Simulate a submission.
+        $this->setUser($student);
+        $submission = $assign->get_user_submission($student->id, true);
+        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        $assign->testable_update_submission($submission, $student->id, true, false);
+        $data = new stdClass();
+        $data->onlinetext_editor = [
+            'itemid' => file_get_unused_draft_itemid(),
+            'text' => 'Submission text',
+            'format' => FORMAT_MOODLE,
+        ];
+        $plugin = $assign->get_submission_plugin_by_type('onlinetext');
+        $plugin->save($submission, $data);
+
+        // Verify output.
+        $this->setUser($teacher);
+
+        $summary = $assign->view('viewcourseindex');
+
+        $this->assertStringContainsString('/mod/assign/view.php?id='.$assign->get_course_module()->id.'&amp;action=grading">1</a>',
+            $summary);
+    }
+
+    /**
+     * Test submissions that need grading output with no submissions
+     */
+    public function test_no_submissions_need_grading() {
+        global $PAGE;
+
+        $this->resetAfterTest();
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'teacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+
+        // Setup the assignment.
+        $this->setUser($teacher);
+        $time = time();
+        $assign = $this->create_instance($course, [
+                'assignsubmission_onlinetext_enabled' => 1,
+            ]);
+        $PAGE->set_url(new moodle_url('/mod/assign/view.php', array(
+            'id' => $assign->get_course_module()->id,
+            'action' => 'grading',
+        )));
+
+        $summary = $assign->view('viewcourseindex');
+
+        $this->assertStringContainsString('/mod/assign/view.php?id='.$assign->get_course_module()->id.'&amp;action=grading">0</a>',
+            $summary);
+    }
 }
