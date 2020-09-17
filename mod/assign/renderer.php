@@ -1346,7 +1346,11 @@ class mod_assign_renderer extends plugin_renderer_base {
         $strsectionname  = $indexsummary->courseformatname;
         $strduedate = get_string('duedate', 'assign');
         $strsubmission = get_string('submission', 'assign');
-        $strgrade = get_string('grade');
+        if ($indexsummary->cangrade) {
+            $strgrade = get_string('numberofsubmissionsneedgrading', 'assign');
+        } else {
+            $strgrade = get_string('grade');
+        }
 
         $table = new html_table();
         if ($indexsummary->usesections) {
@@ -1365,6 +1369,14 @@ class mod_assign_renderer extends plugin_renderer_base {
                                       $info['cmname']);
             $due = $info['timedue'] ? userdate($info['timedue']) : '-';
 
+            if ($indexsummary->cangrade) {
+                $params['action'] = 'grading';
+                $gradeinfo = html_writer::link(new moodle_url('/mod/assign/view.php', $params),
+                    $info['gradeinfo']);
+            } else {
+                $gradeinfo = $info['gradeinfo'];
+            }
+
             $printsection = '';
             if ($indexsummary->usesections) {
                 if ($info['sectionname'] !== $currentsection) {
@@ -1379,9 +1391,9 @@ class mod_assign_renderer extends plugin_renderer_base {
             }
 
             if ($indexsummary->usesections) {
-                $row = array($printsection, $link, $due, $info['submissioninfo'], $info['gradeinfo']);
+                $row = array($printsection, $link, $due, $info['submissioninfo'], $gradeinfo);
             } else {
-                $row = array($link, $due, $info['submissioninfo'], $info['gradeinfo']);
+                $row = array($link, $due, $info['submissioninfo'], $gradeinfo);
             }
             $table->data[] = $row;
         }

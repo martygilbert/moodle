@@ -3153,12 +3153,17 @@ class assign {
                     $submitted = get_string('submissionstatus_', 'assign');
                 }
             }
-            $gradinginfo = grade_get_grades($course->id, 'mod', 'assign', $cm->instance, $USER->id);
-            if (isset($gradinginfo->items[0]->grades[$USER->id]) &&
-                    !$gradinginfo->items[0]->grades[$USER->id]->hidden ) {
-                $grade = $gradinginfo->items[0]->grades[$USER->id]->str_grade;
+            if (has_capability('mod/assign:grade', $context)) {
+                $grade = $assignment->count_submissions_need_grading();
+                $courseindexsummary->cangrade = true;
             } else {
-                $grade = '-';
+                $gradinginfo = grade_get_grades($course->id, 'mod', 'assign', $cm->instance, $USER->id);
+                if (isset($gradinginfo->items[0]->grades[$USER->id]) &&
+                        !$gradinginfo->items[0]->grades[$USER->id]->hidden ) {
+                    $grade = $gradinginfo->items[0]->grades[$USER->id]->str_grade;
+                } else {
+                    $grade = '-';
+                }
             }
 
             $courseindexsummary->add_assign_info($cm->id, $cm->get_formatted_name(), $sectionname, $timedue, $submitted, $grade);
