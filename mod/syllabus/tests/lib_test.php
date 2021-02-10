@@ -51,7 +51,7 @@ class mod_syllabus_lib_testcase extends advanced_testcase {
      * Test resource_view
      * @return void
      */
-    public function test_resource_view() {
+    public function test_syllabus_view() {
         global $CFG;
 
         $CFG->enablecompletion = 1;
@@ -60,7 +60,7 @@ class mod_syllabus_lib_testcase extends advanced_testcase {
         $this->setAdminUser();
         // Setup test data.
         $course = $this->getDataGenerator()->create_course(array('enablecompletion' => 1));
-        $resource = $this->getDataGenerator()->create_module('syllabu', array('course' => $course->id),
+        $resource = $this->getDataGenerator()->create_module('syllabus', array('course' => $course->id),
                                                             array('completion' => 2, 'completionview' => 1));
         $context = context_module::instance($resource->cmid);
         $cm = get_coursemodule_from_instance('syllabus', $resource->id);
@@ -68,7 +68,7 @@ class mod_syllabus_lib_testcase extends advanced_testcase {
         // Trigger and capture the event.
         $sink = $this->redirectEvents();
 
-        resource_view($resource, $course, $cm, $context);
+        syllabus_view($resource, $course, $cm, $context);
 
         $events = $sink->get_events();
         // 2 additional events thanks to completion.
@@ -132,7 +132,7 @@ class mod_syllabus_lib_testcase extends advanced_testcase {
                 'name' => 'R3', 'files' => $draftid));
 
         // Try get_coursemodule_info for first one.
-        $info = resource_get_coursemodule_info(
+        $info = syllabus_get_coursemodule_info(
                 $DB->get_record('course_modules', array('id' => $resource1->cmid)));
 
         // The name should be set. There is no overridden icon.
@@ -140,19 +140,19 @@ class mod_syllabus_lib_testcase extends advanced_testcase {
         $this->assertEmpty($info->icon);
 
         // For second one, there should be an overridden icon.
-        $info = resource_get_coursemodule_info(
+        $info = syllabus_get_coursemodule_info(
                 $DB->get_record('course_modules', array('id' => $resource2->cmid)));
         $this->assertEquals('R2', $info->name);
         $this->assertEquals('f/text-24', $info->icon);
 
         // For third one, it should use the highest sortorder icon.
-        $info = resource_get_coursemodule_info(
+        $info = syllabus_get_coursemodule_info(
                 $DB->get_record('course_modules', array('id' => $resource3->cmid)));
         $this->assertEquals('R3', $info->name);
         $this->assertEquals('f/document-24', $info->icon);
     }
 
-    public function test_resource_core_calendar_provide_event_action() {
+    public function test_syllabus_core_calendar_provide_event_action() {
         $this->resetAfterTest();
         $this->setAdminUser();
 
@@ -178,7 +178,7 @@ class mod_syllabus_lib_testcase extends advanced_testcase {
         $this->assertTrue($actionevent->is_actionable());
     }
 
-    public function test_resource_core_calendar_provide_event_action_already_completed() {
+    public function test_syllabus_core_calendar_provide_event_action_already_completed() {
         global $CFG;
 
         $this->resetAfterTest();
@@ -215,7 +215,7 @@ class mod_syllabus_lib_testcase extends advanced_testcase {
     /**
      * Test mod_syllabus_core_calendar_provide_event_action with user override
      */
-    public function test_resource_core_calendar_provide_event_action_user_override() {
+    public function test_syllabus_core_calendar_provide_event_action_user_override() {
         global $CFG, $USER;
 
         $this->resetAfterTest();
