@@ -45,7 +45,7 @@ class mobile {
 		$cm = get_coursemodule_from_id('syllabus', $args->cmid);
 
 		// Capabilities check.
-		context = \context_module::instance($cm->id);
+		$context = \context_module::instance($cm->id);
 
 		require_capability ('mod/syllabus:view', $context);
 
