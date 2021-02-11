@@ -32,7 +32,7 @@ $id       = optional_param('id', 0, PARAM_INT); // Course Module ID
 $r        = optional_param('r', 0, PARAM_INT);  // Resource instance ID
 $redirect = optional_param('redirect', 0, PARAM_BOOL);
 $forceview = optional_param('forceview', 0, PARAM_BOOL);
-error_log("in view.php");
+
 if ($r) {
     if (!$syllabus = $DB->get_record('syllabus', array('id'=>$r))) {
         //syllabus_redirect_if_migrated($r, 0);
