@@ -78,6 +78,11 @@ $string['assignmentduesoonhtml'] = '<p>Hi {$a->firstname},</p>
 <p>The assignment <strong>{$a->assignmentname}</strong> in course {$a->coursename} is due soon.</p>
 <p><strong>Due: {$a->duedate}</strong></p>
 <p><a href="{$a->url}">Go to activity</a></p>';
+$string['assignmentduesoonofflinehtml'] = '<p>Hi {$a->firstname},</p>
+<p>The assignment <strong>{$a->assignmentname}</strong> in course {$a->coursename} is due soon.</p>
+<p>If you have already submitted your work, no further action is required.</p>
+<p><strong>Due: {$a->duedate}</strong></p>
+<p><a href="{$a->url}">Go to activity</a></p>';
 $string['assignmentoverduehtml'] = '<p>Hi {$a->firstname},</p>
 <p><strong>{$a->assignmentname}</strong> in course {$a->coursename} was due on <strong>{$a->duedate}</strong>.</p>
 <p>You might still be able to submit your assignment{$a->cutoffsnippet}, but your submission will be marked as late.</p>
