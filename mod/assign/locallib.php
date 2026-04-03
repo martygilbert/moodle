@@ -6207,6 +6207,11 @@ class assign {
             } else {
                 if ($anysubmitted) {
                     $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+                    foreach ($team as $member) {
+                        $membersubmission = $this->get_user_submission($member->id, true, $submission->attemptnumber);
+                        $membersubmission->status = $submission->status;
+                        $result = $DB->update_record('assign_submission', $membersubmission) && $result;
+                    }
                 } else {
                     $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
                 }
