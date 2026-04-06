@@ -250,6 +250,16 @@ class notification_helper {
                 continue;
             }
 
+            // Don't notify if requireallteammemberssubmit set to 'no' and the group has submitted.
+            if ($assignmentobj->get_instance()->teamsubmission) {
+                $groupsubmission = $assignmentobj->get_group_submission($user->id, 0, false); 
+                if ($groupsubmission && $groupsubmission->status === ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                    mtrace("skipping user {$user->id}. In a group that has already submitted");
+                    unset($users[$key]);
+                    continue;
+                }
+            }
+
             // Determine key dates with respect to any overrides.
             $duedate = $assignmentobj->override_exists($user->id)->duedate ?? $assignmentobj->get_instance()->duedate;
             $cutoffdate = $assignmentobj->override_exists($user->id)->cutoffdate ?? $assignmentobj->get_instance()->cutoffdate;

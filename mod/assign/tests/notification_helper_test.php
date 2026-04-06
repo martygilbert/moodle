@@ -741,6 +741,60 @@ final class notification_helper_test extends \advanced_testcase {
     }
 
     /**
+     * Test that group members are skipped if their group has already submitted.
+     */
+    public function test_get_users_within_assignment_skips_group_members_on_group_submission(): void {
+        // Use resetAfterTest to ensure the database is rolled back after the check.
+        $this->resetAfterTest();
+        $generator = $this->getDataGenerator();
+
+        // Setup a course, two students, and a shared group.
+        $course = $generator->create_course();
+        $student1 = $generator->create_user(['firstname' => 'Submitter']);
+        $student2 = $generator->create_user(['firstname' => 'Observer']);
+        
+        $generator->enrol_user($student1->id, $course->id, 'student');
+        $generator->enrol_user($student2->id, $course->id, 'student');
+
+        $group = $generator->create_group(['courseid' => $course->id]);
+        groups_add_member($group, $student1);
+        groups_add_member($group, $student2);
+
+        // Create a team assignment that is due soon (e.g., within 24 hours).
+        /** @var \mod_assign_generator $assigngenerator */
+        $assigngenerator = $generator->get_plugin_generator('mod_assign');
+        $assignment = $assigngenerator->create_instance([
+            'course' => $course->id,
+            'teamsubmission' => 1,
+            'requireallteammemberssubmit' => 0, // Only one submission required.
+            'duedate' => time() + DAYSECS,
+            'assignsubmission_onlinetext_enabled' => 1,
+        ]);
+
+        // Confirm both students are in the notification list BEFORE any submission.
+        $users = notification_helper::get_users_within_assignment($assignment->id, notification_helper::TYPE_DUE_SOON);
+        $this->assertArrayHasKey($student1->id, $users);
+        $this->assertArrayHasKey($student2->id, $users);
+
+        // Student 1 submits for the entire group.
+        $this->setUser($student1);
+        $cm = get_coursemodule_from_instance('assign', $assignment->id);
+        $context = \context_module::instance($cm->id);
+        $assignmentobj = new \mod_assign_testable_assign($context, $cm, $course);
+
+        $submission = $assignmentobj->get_group_submission($student1->id, $group->id, true);
+        $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        $assignmentobj->testable_update_submission($submission, $student1->id, true, true);
+
+        // Call the helper again to verify Student 2 is now excluded by your fix.
+        $users = notification_helper::get_users_within_assignment($assignment->id, notification_helper::TYPE_DUE_SOON);
+
+        $this->assertArrayNotHasKey($student1->id, $users, 'The submitter should be excluded.');
+        $this->assertArrayNotHasKey($student2->id, $users, 'The group member should be skipped because the team submitted.');
+        $this->assertCount(0, $users, 'The notification list should be empty.');
+    }
+
+    /**
      * Test that we do not fail on deleted assignments with overdue notifications to a user.
      */
     public function test_not_to_fail_on_deleted_assigment_with_overdue_notifications_to_user(): void {
